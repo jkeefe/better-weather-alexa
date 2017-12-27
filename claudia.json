@@ -1,0 +1,7 @@
+{
+  "lambda": {
+    "role": "lambda-executor",
+    "name": "better-weather-alexa",
+    "region": "us-east-1"
+  }
+}

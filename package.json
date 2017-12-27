@@ -1,0 +1,28 @@
+{
+  "name": "better-weather-alexa",
+  "version": "1.0.0",
+  "description": "Giving Alexa a weather upgrade thanks to the National Weather Service",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jkeefe/better-weather-alexa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jkeefe/better-weather-alexa/issues"
+  },
+  "homepage": "https://github.com/jkeefe/better-weather-alexa#readme",
+  "devDependencies": {
+    "claudia": "^2.14.3"
+  },
+  "dependencies": {
+    "alexa-sdk": "^1.0.24",
+    "aws-sdk": "^2.175.0",
+    "request": "^2.83.0"
+  }
+}

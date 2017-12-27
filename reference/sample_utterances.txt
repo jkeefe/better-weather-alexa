@@ -1,0 +1,6 @@
+AMAZON.StartOverIntent start
+AMAZON.StartOverIntent new
+AMAZON.StartOverIntent start over
+AMAZON.StartOverIntent play again
+AMAZON.StartOverIntent start again
+
