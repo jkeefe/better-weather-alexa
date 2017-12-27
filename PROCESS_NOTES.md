@@ -24,6 +24,8 @@ Pushed the initial deploy to lambda using this:
 
 `AWS_PROFILE=personal-lambda-master ./node_modules/.bin/claudia create --region us-east-1 --handler bot.handler --role lambda-executor`
 
+`AWS_PROFILE=personal-lambda-master ./node_modules/.bin/claudia update`
+
 Then ...
 
 - Logged into [AWS](https://aws.amazon.com/) 
@@ -32,6 +34,8 @@ Then ...
 - Under "Add Triggers" picked "Alexa Skills Kit"
 - Needed to scroll down to the "Configure Trigger" and confirm the default there
 - Then "Save" at the top of the page
+- Set Timeout to 20 seconds
+- Set Memory to 256MB
 
 ## Alexa Setup
 
@@ -63,4 +67,4 @@ Then ...
 
 I need to adjust `bot.js` to be get the weather from the National Weather Service, which is really my favorite source. The API is [here](https://forecast-v3.weather.gov/documentation?redirect=legacy).
 
-
+Zip Code Centroids: https://gist.github.com/erichurst/7882666
