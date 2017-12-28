@@ -1,5 +1,6 @@
 const Alexa = require('alexa-sdk');
 const request = require('request');
+const parse = require('csv-parse');
 
 // TODO replace with your app ID (OPTIONAL).
 var APP_ID = undefined; 
@@ -51,7 +52,7 @@ function buildSpeech () {
             
 }
 
-/// utility functions start here
+/// utility functions start here ///
 
 function getForecastURL(latitude, longitude) {
     return new Promise ((resolve, reject) => {

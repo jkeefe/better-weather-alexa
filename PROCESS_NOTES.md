@@ -15,7 +15,7 @@ Then installed claudia (but don't need api-gateway, because the trigger will be 
 
 ```
 npm init --yes
-npm install claudia --save-dev
+npm install claudia fast-csv --save-dev
 npm install request alexa-sdk --save
 
 ```
@@ -65,6 +65,27 @@ Then ...
     
 ## Weather Forecast Code
 
-I need to adjust `bot.js` to be get the weather from the National Weather Service, which is really my favorite source. The API is [here](https://forecast-v3.weather.gov/documentation?redirect=legacy).
+I needed to adjust `bot.js` to be get the weather from the National Weather Service, which is really my favorite source. The API is [here](https://forecast-v3.weather.gov/documentation?redirect=legacy).
 
-Zip Code Centroids: https://gist.github.com/erichurst/7882666
+Built that in the `BuildSpeech()` function.
+
+Initially used lat & lon from Zip code 10001
+
+## Zip Code Lookup
+
+I want to customize the response based on the user's zip code. So process will be:
+
+- Get Zip Code from user
+    - Here's how to get that data: [Part 1](https://developer.amazon.com/docs/custom-skills/device-address-api.html) and [Part 2](https://developer.amazon.com/docs/custom-skills/device-address-api.html#getCountryAndPostalCode)
+- Translate Zip Code to Lat Lon
+    - Got Zip Code Centroids: https://gist.github.com/erichurst/7882666
+    - Made utility for converting into JSON: `utilities/zips_to_json`
+    - Note that there MUST be a carriage return after the last line, or you'll get a `column header mismatch expected: ...` error.
+- Send Lat lon to NWS for the forecast URL
+- Hit forecast URL for the forecast!
+
+
+Getting info from the user: 
+Part 1 - https://developer.amazon.com/docs/custom-skills/device-address-api.html
+Part 2 - https://developer.amazon.com/docs/custom-skills/device-address-api.html#getCountryAndPostalCode
+
