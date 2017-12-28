@@ -1,6 +1,9 @@
 const Alexa = require('alexa-sdk');
 const request = require('request');
-const parse = require('csv-parse');
+const zips = require('./data/zips.json');
+
+// turns on/off logging
+const logger = true;
 
 // TODO replace with your app ID (OPTIONAL).
 var APP_ID = undefined; 
@@ -38,25 +41,113 @@ var newSessionHandlers = {
 function buildSpeech () {
     
     // This is where the forecast-building happens.
-    
-    getForecastURL(40.7506,-73.9972)
+    getDeviceZip(this.event)
+    .then(getForecastURL)
     .then(getForecast)
     .then( (speech) => {
         console.log("Alexa would say:", speech);
         this.emit(":tell", speech);
     } ) 
-    .catch( (error) => {
-        console.log("Catching this error: ", error);
-        this.emit(":tell", "Oh, I'm sorry. Something went wrong with my program.");
+    .catch( (error_speech) => {
+        this.emit(":tell", error_speech);
     });
             
 }
 
 /// utility functions start here ///
 
-function getForecastURL(latitude, longitude) {
+function getDeviceZip(event) {
     return new Promise ((resolve, reject) => {
-        var url = `https://api.weather.gov/points/${latitude},${longitude}`; 
+        
+        console.log("Event is: ", event);
+        var token = event.context.System.apiAccessToken;
+        var endpoint_domain = event.context.System.apiEndpoint;
+        var deviceID = event.context.System.device.deviceId;
+        var authorization = "Bearer " + token;
+        var endpoint = `${endpoint_domain}/v1/devices/${deviceID}/settings/address/countryAndPostalCode`;
+        
+        var options = {
+            url: endpoint,
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': authorization,
+            }
+        };
+
+        request(options, function(error, response, body) {
+            
+            var errorSpeech;
+            
+            if (error || response.statusCode != 200) {
+                errorSpeech = "I had trouble figuring out your zip code, which I need to get you the right forecast. You may need to grant Better Weather permission to use your location in the Alexa app under 'Skills.'";
+                reject(errorSpeech);
+                console.log("Response:", response);
+                console.log("Error:", error);
+                console.log("Body:", body);
+                return;
+            }
+            
+            if (logger) {
+                console.log("User's location data is:", body);
+            }
+            
+            var data = JSON.parse(body);
+            
+            if (!data || !data.hasOwnProperty('countryCode') ) {    
+                errorSpeech = "I couldn't tell what country you are in. You may need to update your device address information. Or you may need to reinstall the Better Weather skill and consent to providing your address information.";
+                reject(errorSpeech);
+                console.log("No countryCode in data");
+                return;
+            }
+            
+            if (data.countryCode != "US") {
+                errorSpeech = "I'm sorry, Better Weather only works in the United States, and your device appears to be in another country.";
+                console.log("Device not in US.");
+                reject(errorSpeech);
+                return;
+            } 
+            
+            if (!data.hasOwnProperty('postalCode') ) {
+                errorSpeech = "I couldn't tell what zip code you are in. You may need to update your device address information. Or you may need to reinstall the Better Weather skill and consent to providing your address information.";
+                reject(errorSpeech);
+                console.log("No postalCode in data");
+                return;
+            }
+            
+            if (!data.postalCode || data.postalCode === "98109") {
+                // note 98109 is Alexa's default postal code
+                errorSpeech = "I couldn't tell what zip code you are in. You may need to update your device address information. Or you may need to reinstall the Better Weather skill and consent to providing your address information.";
+                reject(errorSpeech);
+                console.log("Blank or default postal code found in data");
+                return;
+            }
+            
+            // lookup the lat/lon object from zips.json.
+            var zip_object = zips[data.postalCode];
+            
+            // make sure we found one
+            if (!zip_object) {
+                errorSpeech = "I don't have location data for your zip code, so I can't provide a forecast. Sorry.";
+                console.log("Data lookup failed for zip code:", data.postalCode);
+                reject(errorSpeech);
+                return;
+            }
+            
+            if (logger) {
+                console.log("Using Zip Code:", data.postalCode);
+                console.log("Zip data is:", JSON.stringify(zip_object));
+            }
+            
+            resolve(zip_object);
+            
+        });
+        
+    });
+}
+
+function getForecastURL(zip_object) {
+    return new Promise ((resolve, reject) => {
+        var url = `https://api.weather.gov/points/${zip_object.lat},${zip_object.lon}`;
         
         // calls to the weather service require (any) User-Agent
         var options = {
@@ -69,7 +160,7 @@ function getForecastURL(latitude, longitude) {
         
         request(options, function (error, response, body) {
             if (error || response.statusCode != 200) {
-                var errorSpeech = "I had trouble reaching the national weather service, so I can't provide a forecat just now.";
+                var errorSpeech = "I had trouble reaching the national weather service, so I can't provide a forecast just now.";
                 reject(errorSpeech);
                 console.log("Response:", response);
                 console.log("Error:", error);
@@ -78,7 +169,11 @@ function getForecastURL(latitude, longitude) {
             }
             
             var data = JSON.parse(body);
-            console.log(data);
+            
+            if (logger) {
+                console.log("NWS points/location data:", data);
+                
+            }
             
             // test for existing data.properties.forecast
             
@@ -95,16 +190,17 @@ function getForecast(url){
                 
         var options = {
             url: url,
+            json: false,
             headers: {
-                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36',
-                'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36',
+                'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
             }
         };
         
         request(options, function (error, response, body) {
             
             if (error || response.statusCode != 200) {
-                var errorSpeech = "I had trouble reaching the national weather service, so I can't provide a forecat just now.";
+                var errorSpeech = "I had trouble reaching the national weather service, so I can't provide a forecast just now.";
                 console.log("Response:", response);
                 console.log("Error:", error);
                 console.log("Body:", body);

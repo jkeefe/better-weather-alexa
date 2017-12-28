@@ -19,13 +19,11 @@
   "homepage": "https://github.com/jkeefe/better-weather-alexa#readme",
   "devDependencies": {
     "claudia": "^2.14.3",
-    "csvtojson": "^1.1.9",
     "fast-csv": "^2.4.1"
   },
   "dependencies": {
     "alexa-sdk": "^1.0.24",
     "aws-sdk": "^2.175.0",
-    "csv-parse": "^2.0.0",
     "request": "^2.83.0"
   }
 }
