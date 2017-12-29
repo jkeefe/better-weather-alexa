@@ -1,6 +1,8 @@
 const Alexa = require('alexa-sdk');
 const request = require('request');
+const cheerio = require('cheerio');
 const zips = require('./data/zips.json');
+
 
 // turns on/off logging
 const logger = true;
@@ -41,9 +43,9 @@ var newSessionHandlers = {
 function buildSpeech () {
     
     // This is where the forecast-building happens.
+    
     getDeviceZip(this.event)
-    .then(getForecastURL)
-    .then(getForecast)
+    .then(getForecastFromPage)
     .then( (speech) => {
         console.log("Alexa would say:", speech);
         this.emit(":tell", speech);
@@ -56,6 +58,24 @@ function buildSpeech () {
 
 /// utility functions start here ///
 
+// Get the lat-lon object based on a raw zip code
+function useZip(zipcode) {
+    return new Promise ((resolve, reject) => {
+        
+        var zip_object = zips[zipcode];
+        
+        if (!zip_object) {
+            var errorSpeech = "I wasn't able to look up the zip code I got, so I can't provide a forecast.";
+            reject(errorSpeech);
+            return;
+        }
+        
+        resolve(zip_object);
+        
+    });    
+}
+
+// Get the lat-lon object based on the Aelexa device zip code
 function getDeviceZip(event) {
     return new Promise ((resolve, reject) => {
         
@@ -145,9 +165,59 @@ function getDeviceZip(event) {
     });
 }
 
+// Scrape the forecast off a NWS page for a given lat/lon
+function getForecastFromPage(zip_object) {
+    return new Promise ((resolve, reject) => {
+        
+        var cachebust = Date.now();
+        var url = `https://forecast.weather.gov/MapClick.php?lat=${zip_object.lat}&lon=${zip_object.lon}&cb=${cachebust}`;
+
+        var options = {
+            url: url,
+            headers: {
+                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36',
+                'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+            }
+        };
+
+        request(options, function (error, response, body) {
+            if (error || response.statusCode != 200) {
+                var errorSpeech = "I had trouble reaching the national weather service, so I can't provide a forecast just now.";
+                reject(errorSpeech);
+                console.log("Response:", response);
+                console.log("Error:", error);
+                console.log("Body:", body);
+                return;
+            }
+            
+            const $ = cheerio.load(body);
+            
+            var forecasts = [];
+
+            var label_objects = $('body').find($('.forecast-label'));
+            label_objects.each(function(i, elem){
+                
+                var label = $(this).text();
+                var forecast = $(this).siblings('.forecast-text').text();
+                forecasts.push(label + ": " + forecast);
+                
+            });
+            
+            // we just use the first two forecasts.
+            var speech = "Here's your better weather ... " + forecasts[0] + " ... And for " + forecasts[1];
+            resolve(speech);
+            
+        });
+        
+    });
+}
+
+// When I was using the (unreliable) NWS API, use lat/lon to get forecast URL
 function getForecastURL(zip_object) {
     return new Promise ((resolve, reject) => {
-        var url = `https://api.weather.gov/points/${zip_object.lat},${zip_object.lon}`;
+        
+        var cachebust = Date.now();
+        var url = `https://api.weather.gov/points/${zip_object.lat},${zip_object.lon}?cb=${cachebust}`;
         
         // calls to the weather service require (any) User-Agent
         var options = {
@@ -183,6 +253,7 @@ function getForecastURL(zip_object) {
     });
 }
 
+// When using the (unreliable) NWS API, use forecast URL to get the forecast text.
 function getForecast(url){
     return new Promise ((resolve,reject) => {
         

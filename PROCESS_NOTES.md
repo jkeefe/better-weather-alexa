@@ -63,14 +63,6 @@ Then ...
     - In order to (later) have the skill adjust to the user's location, checked "Device Address" and "Country & Postal Code Only"
     - Next
     
-## Weather Forecast Code
-
-I needed to adjust `bot.js` to be get the weather from the National Weather Service, which is really my favorite source. The API is [here](https://forecast-v3.weather.gov/documentation?redirect=legacy).
-
-Built that in the `BuildSpeech()` function.
-
-Initially used lat & lon from Zip code 10001
-
 ## Zip Code Lookup
 
 I want to customize the response based on the user's zip code. So process will be:
@@ -82,10 +74,23 @@ I want to customize the response based on the user's zip code. So process will b
     - Made utility for converting into JSON: `utilities/zips_to_json`
     - Note that there MUST be a carriage return after the last line, or you'll get a `column header mismatch expected: ...` error.
 - Send Lat lon to NWS for the forecast URL
+    - See above
 - Hit forecast URL for the forecast!
-
 
 Getting info from the user: 
 Part 1 - https://developer.amazon.com/docs/custom-skills/device-address-api.html
 Part 2 - https://developer.amazon.com/docs/custom-skills/device-address-api.html#getCountryAndPostalCode
 
+## Weather Forecast
+
+Built that in the `BuildSpeech()` function.
+
+I needed to adjust `bot.js` to be get the weather from the National Weather Service, which is really my favorite source. The API is [here](https://forecast-v3.weather.gov/documentation?redirect=legacy).
+
+OK ... WHOA ... that API is totally unreliable. Today it had yesterday's information stuck in it. And depending on the forecast URL, I either couldn't hit it or I couldn't hit it from a lambda function. (Also couldn't hit it if I VPN'd to somewhere else in the US.)
+
+Instead, I'm hitting a NWS weather forecast page based on this URL structure ...
+
+`https://forecast-v3.weather.gov/point/33.749,-84.388`
+
+... and then scraping the `forecast-label` and `forecast-text` right off the page.

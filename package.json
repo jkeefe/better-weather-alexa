@@ -24,6 +24,7 @@
   "dependencies": {
     "alexa-sdk": "^1.0.24",
     "aws-sdk": "^2.175.0",
+    "cheerio": "^1.0.0-rc.2",
     "request": "^2.83.0"
   }
 }
