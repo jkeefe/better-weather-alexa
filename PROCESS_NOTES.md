@@ -1,4 +1,4 @@
-# How I build it (and you can, too)
+# Notes while building better-weather-alexa
 
 ## Lambda Function
 
@@ -74,12 +74,8 @@ I want to customize the response based on the user's zip code. So process will b
     - Made utility for converting into JSON: `utilities/zips_to_json`
     - Note that there MUST be a carriage return after the last line, or you'll get a `column header mismatch expected: ...` error.
 - Send Lat lon to NWS for the forecast URL
-    - See above
+    - See below
 - Hit forecast URL for the forecast!
-
-Getting info from the user: 
-Part 1 - https://developer.amazon.com/docs/custom-skills/device-address-api.html
-Part 2 - https://developer.amazon.com/docs/custom-skills/device-address-api.html#getCountryAndPostalCode
 
 ## Weather Forecast
 
@@ -91,6 +87,9 @@ OK ... WHOA ... that API is totally unreliable. Today it had yesterday's informa
 
 Instead, I'm hitting a NWS weather forecast page based on this URL structure ...
 
-`https://forecast-v3.weather.gov/point/33.749,-84.388`
+`https://forecast.weather.gov/MapClick.php?lat=41.8333925&lon=-88.01214956`
 
 ... and then scraping the `forecast-label` and `forecast-text` right off the page.
+
+Also added a cache-bust to the url, like `&cb=123456`, to ensure we always get a fresh forecast.
+
