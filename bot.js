@@ -44,6 +44,10 @@ function buildSpeech () {
     
     // This is where the forecast-building happens.
     
+    // Send a "Directive" which lets folks know we're working on the answer
+    sendDirective(this.event);
+    
+    // Simultaneously, walk through assembling the forecast
     getDeviceZip(this.event)
     .then(getForecastFromPage)
     .then( (speech) => {
@@ -57,6 +61,54 @@ function buildSpeech () {
 }
 
 /// utility functions start here ///
+
+// Let folks know we're working on it!
+function sendDirective(event) {
+    
+    var token = event.context.System.apiAccessToken;
+    var endpoint_domain = event.context.System.apiEndpoint;
+    var requestID = event.request.requestId;
+    var authorization = "Bearer " + token;
+    var endpoint = `${endpoint_domain}/v1/directives`;
+    
+    var payload = {
+        header:{ 
+            requestId: requestID
+        },
+        directive:{ 
+            type: "VoicePlayer.Speak",
+            speech: "OK! Let me get that for you."
+        }
+    };
+    
+    
+    var options = {
+        url: endpoint,
+        json: true,
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authorization,
+        },
+        body: payload
+    };
+    
+    request(options, function(error, response, body) {
+        
+        if (error) {
+            console.log("Error posting directive:", error);
+        }
+        
+        if (response.statusCode != 204) {
+            console.log("Unexpected response code while posting directive:", response.statusCode);
+            console.log("Response body:", body);
+        }
+        
+        return;
+        
+    });
+    
+}
 
 // Get the lat-lon object based on a raw zip code
 function useZip(zipcode) {
@@ -79,7 +131,6 @@ function useZip(zipcode) {
 function getDeviceZip(event) {
     return new Promise ((resolve, reject) => {
         
-        console.log("Event is: ", event);
         var token = event.context.System.apiAccessToken;
         var endpoint_domain = event.context.System.apiEndpoint;
         var deviceID = event.context.System.device.deviceId;
@@ -205,7 +256,11 @@ function getForecastFromPage(zip_object) {
             
             // we just use the first two forecasts.
             var speech = "Here's your better weather ... " + forecasts[0] + " ... And for " + forecasts[1];
-            resolve(speech);
+            
+            // alexa is having trouble with sentences ending in abbreviations, like `at 8 mph.`
+            // so adding extra pauses there.
+            var cleaned_speech = speech.replace(". ", " ... ");
+            resolve(cleaned_speech);
             
         });
         

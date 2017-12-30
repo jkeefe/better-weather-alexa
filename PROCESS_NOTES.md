@@ -93,3 +93,35 @@ Instead, I'm hitting a NWS weather forecast page based on this URL structure ...
 
 Also added a cache-bust to the url, like `&cb=123456`, to ensure we always get a fresh forecast.
 
+## User Experience Tweaks
+
+### MPH-dot
+
+Turns out that `mph.` at the end of a sentence -- such as "Wind from the west at 10 mph." -- don't get treated like the end of a sentence. To make that clearer, I'm going to replace `mph.` with `mph. ...` for a natural pause.
+
+### Waiting to get info
+
+I want Alexa to say "Just a moment while I get your better weather from the national weather service ..." and then continue with the regular processing.
+
+Turns out that's called issuing a "Directive" ... and details on that are [here](https://developer.amazon.com/docs/custom-skills/send-the-user-a-progressive-response.html)
+
+The code for that looks like this:
+
+```
+POST https://api.amazonalexa.com/v1/directives HTTP/1.1
+Authorization: Bearer AxThk...
+Content-Type: application/json
+
+{ 
+  "header":{ 
+    "requestId":"amzn1.echo-api.request.xxxxxxx"
+  },
+  "directive":{ 
+    "type":"VoicePlayer.Speak",
+    "speech":"This text is spoken while your skill processes the full response."
+  }
+}
+```
+
+
+
