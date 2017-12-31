@@ -103,7 +103,7 @@ Turns out that `mph.` at the end of a sentence -- such as "Wind from the west at
 
 I want Alexa to say "Just a moment while I get your better weather from the national weather service ..." and then continue with the regular processing.
 
-Turns out that's called issuing a "Directive" ... and details on that are [here](https://developer.amazon.com/docs/custom-skills/send-the-user-a-progressive-response.html)
+Turns out that's called issuing a progressive response, or "Directive" ... and details on that are [here](https://developer.amazon.com/docs/custom-skills/send-the-user-a-progressive-response.html)
 
 The code for that looks like this:
 

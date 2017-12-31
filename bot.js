@@ -51,7 +51,7 @@ function buildSpeech () {
     getDeviceZip(this.event)
     .then(getForecastFromPage)
     .then( (speech) => {
-        console.log("Alexa would say:", speech);
+        console.log("Alexa says:", speech);
         this.emit(":tell", speech);
     } ) 
     .catch( (error_speech) => {
@@ -250,17 +250,17 @@ function getForecastFromPage(zip_object) {
                 
                 var label = $(this).text();
                 var forecast = $(this).siblings('.forecast-text').text();
+                
+                // taking the label (Tonite, Monday, etc) and adding a break 
+                // then the forecast. Pushing that into an array.
                 forecasts.push(label + ": " + forecast);
                 
             });
             
             // we just use the first two forecasts.
-            var speech = "Here's your better weather ... " + forecasts[0] + " ... And for " + forecasts[1];
+            var speech = "Here's your better weather ... " + forecasts[0] + ". ... And for " + forecasts[1];
             
-            // alexa is having trouble with sentences ending in abbreviations, like `at 8 mph.`
-            // so adding extra pauses there.
-            var cleaned_speech = speech.replace(". ", " ... ");
-            resolve(cleaned_speech);
+            resolve(speech);
             
         });
         
