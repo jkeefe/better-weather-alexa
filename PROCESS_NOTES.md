@@ -39,10 +39,8 @@ Then ...
 
 ## Alexa Setup
 
-(screenshots available)
-
 - Opened a new tab in my browser
-- Went to developers.amazon.com
+- Went to https://developers.amazon.com
 - Logged in
 - Skill Information
     - Picked "Alexa Skills Kit"
